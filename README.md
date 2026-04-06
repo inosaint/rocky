@@ -13,6 +13,8 @@ Rocky is a personality plugin with two independent layers:
 
 Both modes are OFF by default. You control what's active.
 
+Rocky is a generic [AgentSkills](https://agentskills.io) plugin. The `skills/` directory works with any compatible agent
+
 ## Installation
 
 **From GitHub (recommended) — run inside Claude Code:**
