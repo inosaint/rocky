@@ -1,0 +1,15 @@
+{
+  "description": "Rocky personality injection hook — reads toggle state and injects Eridian communication rules",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

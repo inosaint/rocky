@@ -1,0 +1,13 @@
+{
+  "name": "rocky",
+  "version": "1.0.0",
+  "description": "Makes Claude Code talk and think like Rocky from Project Hail Mary — Eridian engineer personality with toggle controls",
+  "author": {
+    "name": "vikxlp",
+    "url": "https://github.com/vikxlp"
+  },
+  "homepage": "https://github.com/vikxlp/rocky",
+  "repository": "https://github.com/vikxlp/rocky",
+  "license": "MIT",
+  "keywords": ["personality", "rocky", "project-hail-mary", "eridian"]
+}
