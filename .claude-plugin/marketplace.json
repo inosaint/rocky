@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "rocky",
-      "source": "../",
+      "source": ".",
       "description": "Makes Claude Code talk and think like Rocky from Project Hail Mary — Eridian engineer personality with toggle controls",
       "version": "1.0.0"
     }
