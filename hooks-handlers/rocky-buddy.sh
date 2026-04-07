@@ -94,24 +94,11 @@ read_buddy_art() {
   fi
 }
 
-# Format speech bubble
+# Format speech (no bubble border)
 format_bubble() {
   local text=$1
-  local width=35
-  local padding=2
-
-  # Pad text to width
-  local padded="$text"
-  local text_len=${#text}
-  if [ $text_len -lt $((width - padding)) ]; then
-    local spaces=$((width - text_len - padding))
-    padded="$text$(printf ' %.0s' $(seq 1 $spaces))"
-  fi
-
-  # Speech bubble
-  echo "┌─────────────────────────────────────┐"
-  echo "│ $padded │"
-  echo "└─────────────────────────────────────┘"
+  # Just show text with Rocky prefix
+  echo "Rocky: $text"
 }
 
 # Main display function
