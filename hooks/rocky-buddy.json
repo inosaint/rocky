@@ -1,16 +1,6 @@
 {
-  "description": "Rocky buddy terminal companion — displays in speech bubble on plan ready, task complete, or error",
+  "description": "Rocky buddy terminal companion — displays in speech bubble on task complete or message events",
   "hooks": {
-    "PlanReady": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/rocky-buddy.sh plan"
-          }
-        ]
-      }
-    ],
     "TaskCompleted": [
       {
         "hooks": [
@@ -21,12 +11,12 @@
         ]
       }
     ],
-    "ErrorOccurred": [
+    "PostToolUse": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/rocky-buddy.sh error"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks-handlers/rocky-buddy.sh message"
           }
         ]
       }
