@@ -46,7 +46,9 @@ Open Claude Code and run each command separately:
 **Step 3** — Activate:
 ```
 /reload-plugins
-``` On first use, Claude Code will ask permission to run a small script that reads Rocky's state — click **Allow**.
+```
+
+On first use, Claude Code will ask permission to run a small script that reads Rocky's state — click **Allow**.
 
 > **Not sure which to use?** If you only use Claude Code, go with Option 2. If you use multiple AI coding tools, use Option 1.
 
