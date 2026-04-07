@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 
 # Rocky Buddy — Event-triggered terminal companion
-# Displays on plan ready, task complete, or error with sarcastic one-liner
+# Displays when buddy is enabled on plan ready, task complete, session start, or error
 
 EVENT_TYPE="${1:-unknown}"
 BUDDY_ART_FILE="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy/companion.txt"
+STATE_FILE="$HOME/.claude/rocky-state.json"
+
+# Check if buddy is enabled
+check_buddy_enabled() {
+  if [ ! -f "$STATE_FILE" ]; then
+    return 1
+  fi
+
+  python3 -c "import json; d=json.load(open('$STATE_FILE')); exit(0 if d.get('buddy', False) else 1)" 2>/dev/null
+  return $?
+}
 
 # One-liner response collections
 declare -a PLAN_RESPONSES=(
@@ -135,6 +146,19 @@ generate_hook_output() {
 EOF
 }
 
-# Execute
-generate_hook_output
+# Main execution
+if check_buddy_enabled; then
+  generate_hook_output
+else
+  # Buddy disabled, return empty hook output
+  cat << EOF
+{
+  "hookSpecificOutput": {
+    "hookEventName": "${EVENT_TYPE}",
+    "buddyEnabled": false
+  }
+}
+EOF
+fi
+
 exit 0
