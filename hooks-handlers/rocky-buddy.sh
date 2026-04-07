@@ -116,18 +116,16 @@ display_buddy() {
 
 # Generate hook output JSON
 generate_hook_output() {
-  local response=$(select_response "$EVENT_TYPE")
   local display=$(display_buddy)
 
-  # Escape for JSON
-  local escaped_display=$(printf '%s' "$display" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null || echo "$display")
+  # Escape for JSON (same pattern as session-start.sh)
+  local escaped_display=$(printf '%s' "$display" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])" 2>/dev/null || echo "")
 
   cat << EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "${EVENT_TYPE}",
-    "buddyResponse": "${response}",
-    "displayOutput": "${escaped_display}"
+    "additionalContext": "${escaped_display}"
   }
 }
 EOF
@@ -142,7 +140,7 @@ else
 {
   "hookSpecificOutput": {
     "hookEventName": "${EVENT_TYPE}",
-    "buddyEnabled": false
+    "additionalContext": ""
   }
 }
 EOF

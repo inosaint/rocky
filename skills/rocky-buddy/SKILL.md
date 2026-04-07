@@ -71,10 +71,10 @@ Rocky: Rocky's observation here
 
 ## Independence
 
-Rocky buddy is independent from rocky-talk and rocky-mind:
+Rocky buddy is independent from rocky-talk and rocky:
 - `/rocky-buddy on` → See Rocky ASCII art (messages stay normal English)
 - `/rocky-talk on` → Messages use Rocky speech (may or may not show buddy)
-- `/rocky-mind on` → Problem-solving uses Rocky approach (may or may not show buddy)
+- `/rocky on` → Problem-solving uses Rocky approach (may or may not show buddy)
 
 All three can be toggled independently for different experiences.
 
