@@ -31,14 +31,22 @@ The installer will detect which agents you have and ask which ones to add Rocky 
 
 This gives you persistent state across sessions — Rocky remembers its on/off setting every time you open Claude Code.
 
-Open Claude Code and run these two commands:
+Open Claude Code and run each command separately:
 
+**Step 1** — Add the marketplace:
 ```
 /plugin marketplace add vikxlp/rocky
+```
+
+**Step 2** — Install the plugin:
+```
 /plugin install rocky@rocky-plugins
 ```
 
-Then run `/reload-plugins` to activate. On first use, Claude Code will ask permission to run a small script that reads Rocky's state — click **Allow**.
+**Step 3** — Activate:
+```
+/reload-plugins
+``` On first use, Claude Code will ask permission to run a small script that reads Rocky's state — click **Allow**.
 
 > **Not sure which to use?** If you only use Claude Code, go with Option 2. If you use multiple AI coding tools, use Option 1.
 
