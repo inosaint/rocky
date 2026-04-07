@@ -78,20 +78,51 @@ select_response() {
   echo "${responses[$index]}"
 }
 
-# Read buddy ASCII art
-read_buddy_art() {
-  if [ -f "$BUDDY_ART_FILE" ]; then
-    cat "$BUDDY_ART_FILE"
+# Select ASCII variant based on event type
+select_variant() {
+  local event=$1
+  local variants_dir="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy"
+  local variant_file=""
+
+  case "$event" in
+    session)
+      variant_file="$variants_dir/variant-ready.txt"
+      ;;
+    task)
+      variant_file="$variants_dir/variant-calm.txt"
+      ;;
+    error)
+      variant_file="$variants_dir/variant-concerned.txt"
+      ;;
+    plan)
+      variant_file="$variants_dir/variant-calm.txt"
+      ;;
+    *)
+      variant_file="$variants_dir/companion.txt"
+      ;;
+  esac
+
+  if [ -f "$variant_file" ]; then
+    cat "$variant_file"
   else
-    # Fallback
-    echo "      ___"
-    echo "   __/°  \__"
-    echo "  / _     _ \\"
-    echo " / //\\\___/ \\ \\"
-    echo "/ / \\\\   \\\\ \\ \\"
-    echo "\\ \\  \\>  </ / /"
-    echo " \\_>       <_/"
+    # Fallback to original
+    if [ -f "$BUDDY_ART_FILE" ]; then
+      cat "$BUDDY_ART_FILE"
+    else
+      echo "      ___"
+      echo "   __/°  \__"
+      echo "  / _     _ \\"
+      echo " / //\\\___/ \\ \\"
+      echo "/ / \\\\   \\\\ \\ \\"
+      echo "\\ \\  \>  </ / /"
+      echo " \\_>       <_/"
+    fi
   fi
+}
+
+# Read buddy ASCII art (uses variant selection)
+read_buddy_art() {
+  select_variant "$EVENT_TYPE"
 }
 
 # Format speech (no bubble border)
