@@ -4,7 +4,6 @@
 # Displays when buddy is enabled on plan ready, task complete, session start, or error
 
 EVENT_TYPE="${1:-unknown}"
-BUDDY_ART_FILE="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy/companion.txt"
 STATE_FILE="$HOME/.claude/rocky-state.json"
 
 # Map short event names to valid Claude Code hook event names
@@ -115,17 +114,16 @@ select_variant() {
   if [ -f "$variant_file" ]; then
     cat "$variant_file"
   else
-    # Fallback to original
-    if [ -f "$BUDDY_ART_FILE" ]; then
-      cat "$BUDDY_ART_FILE"
+    # Fallback to variant-ready
+    local fallback_file="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy/variant-ready.txt"
+    if [ -f "$fallback_file" ]; then
+      cat "$fallback_file"
     else
       echo "      ___"
-      echo "   __/°  \__"
-      echo "  / _     _ \\"
-      echo " / //\\\___/ \\ \\"
-      echo "/ / \\\\   \\\\ \\ \\"
-      echo "\\ \\  \>  </ / /"
-      echo " \\_>       <_/"
+      echo "   __/o  \__"
+      echo "  / _  oo _ \\"
+      echo " /_/ \.__/"
+      echo " \>   ' '"
     fi
   fi
 }
