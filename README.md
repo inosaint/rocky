@@ -101,34 +101,26 @@ Rocky:   "Rocky break problem into components. Three mechanisms involved.
 
 ## Buddy Variants
 
-Rocky's ASCII art companion reacts to events with seven distinct variants. Each shows emotional state through posture and eye expression:
+Rocky's ASCII art companion has seven distinct variants, each showing a different emotional state through posture and eye expression:
 
-| Variant | Event | Eyes | Mood | Example |
-|---------|-------|------|------|---------|
-| **Ready** | Session start, plan approved | `oo` | Alert, prepared | New session begin |
-| **Calm** | Message output | `oo` | Steady, composed | Ongoing conversation |
-| **Happy** | Task completed | `^^` | Joyful, satisfied | Success achieved |
-| **Concerned** | Error/failure | `oo` | Worried | Tool execution failed |
-| **Sorry** | Error/failure (random) | `><` | Regretful | Randomized with concerned |
-| **Confused** | Future: clarification needed | `??` | Uncertain | (Reserved for expansion) |
-| **Tired** | Future: context compression | `uu` | Exhausted | (Reserved for expansion) |
+| Variant | Eyes | Mood |
+|---------|------|------|
+| **Ready** | `oo` | Alert, prepared |
+| **Calm** | `oo` | Steady, composed |
+| **Happy** | `^^` | Joyful, satisfied |
+| **Concerned** | `oo` | Worried |
+| **Sorry** | `><` | Regretful |
+| **Confused** | `??` | Uncertain |
+| **Tired** | `uu` | Exhausted |
 
-### Event Triggers
-
-- **SessionStart** → variant-ready (alert state)
-- **TaskCompleted** → variant-happy (success celebration)
-- **MessageOutput** → variant-calm (steady conversation)
-- **PostToolUseFailure** → randomize variant-concerned or variant-sorry (50/50)
-- **ExitPlanMode** → variant-ready (plan approved)
-
-Confused and tired variants are created but reserved for future hook events (ambiguous input detection, context window monitoring).
+In practice, only the **SessionStart** hook is reliable in Claude Code — so buddy appears at session start (variant-ready) and that's it. The reactive display across events was the goal but never worked (see [Retrospective](#retrospective) below).
 
 ## How It Works
 
 - **State**: Toggle state is stored in `~/.claude/rocky-state.json` — global, not per-project.
 - **Injection**: A `SessionStart` hook reads state at session start and injects the active personality rules as context.
 - **Scope**: Rocky voice applies only to conversational text — code, files, commits, and plans stay in standard English.
-- **Buddy**: When `/rocky-buddy` is on, Rocky's ASCII art companion appears on key events (session start, task completion, errors, message output) with reactive mood variants. Controlled via `SessionStart`, `TaskCompleted`, `PostToolUseFailure`, `MessageOutput`, and `PostToolUse` (with ExitPlanMode matcher) hooks.
+- **Buddy**: When `/rocky-buddy` is on, Rocky's ASCII art companion appears at session start. Reactive display on other events was attempted but not achieved (see [Retrospective](#retrospective)).
 
 ## Character Reference
 
@@ -141,3 +133,45 @@ Confused and tired variants are created but reserved for future hook events (amb
 | Engineering-first thinking | Every problem has a mechanical solution |
 
 Based on *Project Hail Mary* by Andy Weir.
+
+---
+
+## Retrospective
+
+This fork was an attempt to extend Rocky buddy with reactive mood variants — different ASCII art states triggered by what the agent was doing (completing tasks, hitting errors, outputting responses). Here's an honest account of what worked and what didn't.
+
+### What worked
+
+**Talk mode and Full mode** are solid. The grammar rules (no articles, no contractions, tripled emphasis, "question?" tags, "Settled." closure) produce a consistent and recognizable Rocky voice. The SessionStart hook reliably injects the personality rules on every new session. This is the core of the plugin and it works.
+
+**Self-contained skills design** worked well architecturally. Each skill file contains its own rules inline between `<!-- RULES:START/END -->` markers, so the hook can extract them without needing a separate reference file. Clean and portable.
+
+**The ASCII art variants** (ready, calm, happy, concerned, sorry, confused, tired) are good assets. The visual design — posture and eye expression communicating mood — is the right idea. They just never got to display reactively.
+
+**SessionStart buddy display** works. Rocky appears at the start of every session when buddy mode is on.
+
+### What didn't work
+
+**Reactive buddy display** was the main goal and it failed completely. The approach relied on hook events that don't exist in Claude Code:
+
+| Hook event used | Status |
+|----------------|--------|
+| `TaskCompleted` | Invalid — does not exist |
+| `PostToolUseFailure` | Invalid — does not exist |
+| `MessageOutput` | Invalid — does not exist |
+| `PlanReady` | Invalid — removed early after discovery |
+| `ErrorOccurred` | Invalid — removed early after discovery |
+
+The only hook events that actually work in Claude Code are `SessionStart`, `Stop`, and `PostToolUse` (with optional matchers). We discovered this iteratively — each attempt to wire up a new trigger resulted in the hook silently doing nothing.
+
+**StatusLine rendering** was explored as an alternative — a persistent status bar showing Rocky's current mood. The implementation (`hooks-handlers/rocky-status-line.sh`, `hooks-handlers/rocky-mood.sh`) exists in the codebase but was never confirmed to work at the plugin level. Claude Code's statusLine support may not be exposed to plugins the same way as hooks.
+
+**The upstream PR** (vikxlp/rocky#4) was closed without merging. The reactive display was the feature; without it, the PR was mostly a refactor that the upstream maintainer had no strong reason to take.
+
+### What this means for the codebase
+
+The variant files and mood scripts are left in place — they represent real work and the visual assets are reusable. But the hook wiring in `hooks/hooks.json` references events that will never fire. If someone picks this up, the path forward is either:
+
+1. Map the valid `PostToolUse` hook (with regex matchers on tool names) to approximate mood detection
+2. Use the `Stop` hook to write a mood file, then read it at `SessionStart`
+3. Accept that buddy is session-start only and remove the dead hook entries
