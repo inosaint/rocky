@@ -4,8 +4,16 @@
 # Displays when buddy is enabled on plan ready, task complete, session start, or error
 
 EVENT_TYPE="${1:-unknown}"
-BUDDY_ART_FILE="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy/companion.txt"
 STATE_FILE="$HOME/.claude/rocky-state.json"
+
+# Map short event names to valid Claude Code hook event names
+case "$EVENT_TYPE" in
+  session) HOOK_EVENT_NAME="SessionStart" ;;
+  task)    HOOK_EVENT_NAME="TaskCompleted" ;;
+  plan)    HOOK_EVENT_NAME="PostToolUse" ;;
+  error)   HOOK_EVENT_NAME="PostToolUseFailure" ;;
+  *)       HOOK_EVENT_NAME="$EVENT_TYPE" ;;
+esac
 
 # Check if buddy is enabled
 check_buddy_enabled() {
@@ -26,12 +34,12 @@ declare -a PLAN_RESPONSES=(
   "Strategy acceptable. Implementation begins."
 )
 
-declare -a TASK_RESPONSES=(
+declare -a HAPPY_RESPONSES=(
   "Task finished. Excellent work, friend."
-  "Done. Moving forward."
+  "Success success success. Progress excellent."
   "Mechanism complete. Quality good good good."
-  "Accomplished. Next problem, question?"
-  "Work finished. Progress observed."
+  "Accomplished. Moving forward strong."
+  "Work finished. Victory observed."
 )
 
 declare -a ERROR_RESPONSES=(
@@ -45,18 +53,27 @@ declare -a ERROR_RESPONSES=(
 declare -a SESSION_RESPONSES=(
   "Rocky here. Ready to work, friend."
   "Observing. Session beginning."
-  "I am here. What problem need solving, question?"
+  "Rocky here. What problem need solving, question?"
   "Ready. Building awaits."
   "Session active. Let us engineer good good good."
 )
 
-declare -a MESSAGE_RESPONSES=(
-  "Rocky observing."
-  "Engineering perspective applied."
-  "Analysis complete."
-  "Work continues good good good."
-  "Rocky present. Monitoring progress."
+declare -a CALM_RESPONSES=(
+  "Friend, Rocky observe progress."
+  "Working as planned, friend."
+  "Mechanism sound. Proceeding."
+  "All well. Continuing forward."
+  "Steady progress, friend."
 )
+
+declare -a SORRY_RESPONSES=(
+  "Problem found. Rocky apologize, friend."
+  "Error detected. Rocky regret situation."
+  "Mechanism failed. Rocky work fix, friend."
+  "Mistake observed. Rocky make right."
+  "Problem bad. Rocky sorry, friend."
+)
+
 
 # Select random response based on event
 select_response() {
@@ -68,16 +85,22 @@ select_response() {
       responses=("${PLAN_RESPONSES[@]}")
       ;;
     task)
-      responses=("${TASK_RESPONSES[@]}")
+      responses=("${HAPPY_RESPONSES[@]}")
+      ;;
+    message)
+      responses=("${CALM_RESPONSES[@]}")
       ;;
     error)
-      responses=("${ERROR_RESPONSES[@]}")
+      # Randomize between concerned and sorry responses
+      local error_choice=$((RANDOM % 2))
+      if [ $error_choice -eq 0 ]; then
+        responses=("${ERROR_RESPONSES[@]}")
+      else
+        responses=("${SORRY_RESPONSES[@]}")
+      fi
       ;;
     session)
       responses=("${SESSION_RESPONSES[@]}")
-      ;;
-    message)
-      responses=("${MESSAGE_RESPONSES[@]}")
       ;;
     *)
       responses=("Rocky buddy observing situation.")
@@ -100,42 +123,38 @@ select_variant() {
       variant_file="$variants_dir/variant-ready.txt"
       ;;
     task)
+      variant_file="$variants_dir/variant-happy.txt"
+      ;;
+    message)
       variant_file="$variants_dir/variant-calm.txt"
       ;;
     error)
-      variant_file="$variants_dir/variant-concerned.txt"
+      # Randomize between concerned and sorry
+      local error_variants=("concerned" "sorry")
+      local error_choice=${error_variants[$((RANDOM % 2))]}
+      variant_file="$variants_dir/variant-${error_choice}.txt"
       ;;
     plan)
-      variant_file="$variants_dir/variant-calm.txt"
-      ;;
-    message)
-      # Rotate variants for message events
-      local rand=$((RANDOM % 3))
-      case $rand in
-        0) variant_file="$variants_dir/variant-ready.txt" ;;
-        1) variant_file="$variants_dir/variant-calm.txt" ;;
-        2) variant_file="$variants_dir/variant-concerned.txt" ;;
-      esac
+      variant_file="$variants_dir/variant-ready.txt"
       ;;
     *)
-      variant_file="$variants_dir/companion.txt"
+      variant_file="$variants_dir/variant-ready.txt"
       ;;
   esac
 
   if [ -f "$variant_file" ]; then
     cat "$variant_file"
   else
-    # Fallback to original
-    if [ -f "$BUDDY_ART_FILE" ]; then
-      cat "$BUDDY_ART_FILE"
+    # Fallback to variant-ready
+    local fallback_file="${CLAUDE_PLUGIN_ROOT}/skills/rocky-buddy/variant-ready.txt"
+    if [ -f "$fallback_file" ]; then
+      cat "$fallback_file"
     else
       echo "      ___"
-      echo "   __/°  \__"
-      echo "  / _     _ \\"
-      echo " / //\\\___/ \\ \\"
-      echo "/ / \\\\   \\\\ \\ \\"
-      echo "\\ \\  \>  </ / /"
-      echo " \\_>       <_/"
+      echo "   __/o  \__"
+      echo "  / _  oo _ \\"
+      echo " /_/ \.__/"
+      echo " \>   ' '"
     fi
   fi
 }
@@ -167,7 +186,6 @@ display_buddy() {
 
 # Generate hook output JSON
 generate_hook_output() {
-  local response=$(select_response "$EVENT_TYPE")
   local display=$(display_buddy)
 
   # Escape for JSON
@@ -176,9 +194,8 @@ generate_hook_output() {
   cat << EOF
 {
   "hookSpecificOutput": {
-    "hookEventName": "${EVENT_TYPE}",
-    "buddyResponse": "${response}",
-    "displayOutput": "${escaped_display}"
+    "hookEventName": "${HOOK_EVENT_NAME}",
+    "additionalContext": "${escaped_display}"
   }
 }
 EOF
@@ -188,29 +205,14 @@ EOF
 if check_buddy_enabled; then
   generate_hook_output
 else
-  # Buddy disabled, return empty hook output
-  # For message events, silent when disabled
-  # For other events, still return structured response
-  if [ "$EVENT_TYPE" = "message" ]; then
-    # Silent - no output
-    cat << EOF
+  cat << EOF
 {
   "hookSpecificOutput": {
-    "hookEventName": "${EVENT_TYPE}",
+    "hookEventName": "${HOOK_EVENT_NAME}",
     "buddyEnabled": false
   }
 }
 EOF
-  else
-    cat << EOF
-{
-  "hookSpecificOutput": {
-    "hookEventName": "${EVENT_TYPE}",
-    "buddyEnabled": false
-  }
-}
-EOF
-  fi
 fi
 
 exit 0
